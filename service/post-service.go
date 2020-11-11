@@ -34,7 +34,7 @@ func(*service) Validate(post *entity.Post) error {
 		return err
 	}
 	if post.Title == "" {
-		err := errors.New("The post data is empty")
+		err := errors.New("The post title is empty")
 		return err
 	}
 	return nil
