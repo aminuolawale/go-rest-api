@@ -4,37 +4,33 @@ import (
 	"encoding/json"
 	"net/http"
 	"fmt"
+	"./repos"
+	"./entity"
+	"math/rand"
 )
 
-type Post struct {
-	Id int `json:"id"`
-	Title string `json:"title"`
-	Text string `json:"text"`
-}
 
 
-var posts []Post
 
-func init(){
-	posts = []Post{Post{Id:1, Title:"Title One", Text:"This is the text" }}
-}
-
+var (
+	reposit repos.PostRepo = repos.NewRepository()
+)
 func getPosts(res http.ResponseWriter, req *http.Request){
 	res.Header().Set("Content-Type", "application/json")
-	result, err := json.Marshal(posts)
+	posts, err := reposit.FindAll()
 	if err !=nil {
 		res.WriteHeader(http.StatusInternalServerError)
-		res.Write([]byte(`{"error": "Error marshalling the posts array"}`))
+		res.Write([]byte(`{"error": "Error fetching posts"}`))
 		return 
 	}
 	res.WriteHeader(http.StatusOK)
-	res.Write(result)
+	json.NewEncoder(res).Encode(posts)
 }
 
 
 func createPost(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
-	var post Post
+	var post entity.Post
 	err := json.NewDecoder(req.Body).Decode(&post)
 	if err != nil {
 		fmt.Println(err)
@@ -42,8 +38,9 @@ func createPost(res http.ResponseWriter, req *http.Request) {
 		res.Write([]byte(`{"error": "Error processing request"}`))
 		return 
 	}
-	posts = append(posts, post)
+	post.ID = rand.Int()
+	reposit.Save(&post)
+	fmt.Println("post has been successfully created")
 	res.WriteHeader(http.StatusOK)
-	result, err := json.Marshal(post)
-	res.Write(result)
+	json.NewEncoder(res).Encode(post)
 }
